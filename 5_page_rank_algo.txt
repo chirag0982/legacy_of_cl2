@@ -1,0 +1,62 @@
+! pip install networkx beautifulsoup4 requests
+
+import networkx as nx
+from bs4 import BeautifulSoup
+import requests
+
+class PageRank:
+    def __init__(self, damping_factor=0.85, max_iter=100, tol=1.0e-6):
+        self.damping_factor = damping_factor
+        self.max_iter = max_iter
+        self.tol = tol
+        self.graph = nx.DiGraph()
+
+    def add_edge(self, from_node, to_node):
+        self.graph.add_edge(from_node, to_node)
+
+    def compute_pagerank(self):
+        pagerank = nx.pagerank(self.graph, alpha=self.damping_factor, max_iter=self.max_iter, tol=self.tol)
+        return pagerank
+
+    def scrape_links(self, url):
+        try:
+            response = requests.get(url)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            links = set()
+            for link in soup.find_all('a', href=True):
+                links.add(link['href'])
+            return links
+        except Exception as e:
+            print(f"Error scraping {url}: {e}")
+            return set()
+
+    def build_graph_from_urls(self, seed_url, depth=1):
+        urls_to_visit = [seed_url]
+        visited_urls = set()
+
+        for _ in range(depth):
+            new_urls = []
+            for url in urls_to_visit:
+                if url not in visited_urls:
+                    visited_urls.add(url)
+                    links = self.scrape_links(url)
+                    for link in links:
+                        self.add_edge(url, link)  # Create edges in the graph
+                        new_urls.append(link)
+            urls_to_visit = new_urls
+
+pagerank = PageRank()
+
+# Example: Build graph from URLs (seeds)
+# https://en.wikipedia.org/wiki/Web_scraping
+# https://medium.com/@arti.singh280/list/the-quantum-world-6126d55e1882
+seed_url = "https://docs.quantum.ibm.com/api/qiskit/release-notes/0.44#misc-deprecations"  # Change this URL as needed
+pagerank.build_graph_from_urls(seed_url, depth=2)
+
+# Compute PageRank
+ranks = pagerank.compute_pagerank()
+
+# Print the PageRank scores
+print("PageRank Scores:")
+for url, score in ranks.items():
+    print(f"{url}: {score:.4f}")

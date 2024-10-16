@@ -1,0 +1,33 @@
+! pip install nltk
+
+import nltk
+from nltk.corpus import stopwords
+from nltk.stem import PorterStemmer
+import string
+
+# Download NLTK resources (you may need to run this once)
+nltk.download('punkt')
+nltk.download('stopwords')
+
+def preprocess_text(text):
+    # Initialize the stemmer and get the list of stop words
+    stemmer = PorterStemmer()
+    stop_words = set(stopwords.words('english'))
+
+    # Tokenize the text into words
+    words = nltk.word_tokenize(text)
+
+    # Preprocess the words: remove punctuation, stop words and stem
+    processed_words = []
+    for word in words:
+        word = word.lower()  # Convert to lowercase
+        word = word.strip(string.punctuation)  # Remove punctuation
+        if word and word not in stop_words:  # Check if it's not a stop word
+            stemmed_word = stemmer.stem(word)  # Stem the word
+            processed_words.append(stemmed_word)
+
+    return processed_words
+
+sample_text = "This is a sample text for preprocessing! The text contains some stop words."
+processed = preprocess_text(sample_text)
+print("Processed Words:", processed)
